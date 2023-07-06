@@ -1,7 +1,8 @@
 import serial
 import time
 import threading
-import time
+import keyboard
+import datetime
 #Command Types
 TRANS_TYPE_COMMAND = 0x7E
 TRANS_TYPE_ACKNOWLEDGE = 0x40
@@ -37,20 +38,33 @@ reading_serial = True
 establishConnection = [TRANS_TYPE_COMMAND,ESTABLISH_CONNECTION,ESTABLISH_CONNECTION_SERIAL]
 moveMotor = [TRANS_TYPE_COMMAND,DISPENSE_CANDY,MOTOR_ROTATE]
 
+dispense_event = threading.Event()
 
-def connect_serial(comport,baudrate, beambreakevents):
-    global ser;
-    global reading_serial;
-    global thread;
-    global beambreakevents_var;
+
+def connect_serial(comport,baudrate,beambreakevents):
+    global ser
+    global reading_serial
+    global beambreakevents_var
+    global thread
     beambreakevents_var = beambreakevents
     ser = serial.Serial(comport, baudrate, xonxoff = True)
     time.sleep(3)
     thread = threading.Thread(target=read_from_port)
     thread.start()
     print("Connected to serial")
-    reading_serial = True;
-    return ser, reading_serial;
+    reading_serial = True
+    return ser, reading_serial
+
+def command_to_send(command):
+    #print("Running Command to Send")
+    ser.reset_input_buffer()
+    ser.write(command)
+    return True
+
+def reset_time(timer):
+    global start_time;
+    start_time = timer
+
 
 def close_serial():
     global reading_serial;
@@ -63,15 +77,6 @@ def close_serial():
     print("Serial Closed")
     return reading_serial;
 
-def command_to_send(command):
-    #print("Running Command to Send")
-    ser.reset_input_buffer()
-    ser.write(command)
-    return True
-
-def reset_time(timer):
-    global start_time;
-    start_time = timer
 
 def read_from_port():
     print("Read from port thread started")
@@ -80,20 +85,23 @@ def read_from_port():
             bytes_read = ser.read(3)
             if bytes_read == b"@es":
                 print("Connection Established")
+                #return('connected')
             elif bytes_read == b"@iy":
                 print("Motor Moved")
-                #print(datetime.datetime.now())
+                #return('motor_moved')
             elif bytes_read == b"%MC":
                 print("Candy Dispensed")
                 dispense_time = start_time.getTime()
                 beambreakevents_var.write('%0.3f,%i,%i\n' %(dispense_time, 1, 0))
-                print(dispense_time)
+                dispense_event.set()
+                #return('candy_disp')
                 #return dispense_time
             elif bytes_read == b"%TR":
                 print("Candy Taken")
                 taken_time = start_time.getTime()
                 beambreakevents_var.write('%0.3f,%i,%i\n' %(taken_time, 0, 1))
-                print(taken_time)
+                #return('candy_taken')
                 #return taken_time
             else:
                 print(bytes_read)
+                #return('nada')
