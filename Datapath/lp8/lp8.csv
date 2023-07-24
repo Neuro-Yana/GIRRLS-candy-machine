@@ -1,6 +1,0 @@
-left_stim_name,left_stim_number,right_stim_name,right_stim_number,shceduled_outcome,stim_onset,key_press,RT,accuracy,reward_outcome,feedback_onset,block
-./Stims/4.bmp,4,./Stims/6.bmp,3,1,0.012055899947881699,1,0.9022462000139058,1,correct_reward,2.929668199736625,0
-./Stims/3.bmp,1,./Stims/5.bmp,6,1,6.97262329980731,4,0.9411817998625338,0,incorrect,9.925536199938506,0
-./Stims/1.bmp,2,./Stims/2.bmp,5,1,12.942137899808586,1,0.9492673999629915,0,incorrect,15.906055000144988,0
-./Stims/6.bmp,3,./Stims/4.bmp,4,0,18.923045699950308,4,1.2994340998120606,0,probabalistic_reward,22.235099299810827,0
-./Stims/1.bmp,2,./Stims/2.bmp,5,1,25.967558899894357,q,1.2804434997960925,0,,,0
