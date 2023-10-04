@@ -1,0 +1,58 @@
+```{r packages}
+library(tidyverse)
+library(broom)
+library(knitr)
+library(readr)
+```
+```{r}
+df <- read.csv("test_1.csv")
+```
+
+```{r}
+df_3 <- subset(df, left_stim_number=="3")
+df_4 <- subset(df, left_stim_number=="4")
+df_34 <- rbind(df_3, df_4)
+
+df_2 <- subset(df, left_stim_number=="2")
+df_5 <- subset(df, left_stim_number=="5")
+df_25 <- rbind(df_2, df_5)
+
+df_1 <- subset(df, left_stim_number=="1")
+df_6 <- subset(df, left_stim_number=="6")
+df_16 <- rbind(df_1, df_6)
+```
+
+
+#Correct rewarded choices
+```{r}
+act_34 <- subset(df_34, df_34$accuracy=="1")
+scheduled_rew_34 <- nrow(subset(act_34, act_34$shceduled_outcome=="1"))/nrow(act_34)
+scheduled_rew_34
+
+```
+```{r}
+act_25 <- subset(df_25, df_25$accuracy=="1")
+scheduled_rew_25 <- nrow(subset(act_25, act_25$shceduled_outcome=="1"))/nrow(act_25)
+scheduled_rew_25
+
+```
+
+```{r}
+act_16 <- subset(df_16, df_16$accuracy=="1")
+scheduled_rew_16 <- nrow(subset(act_16, act_16$shceduled_outcome=="1"))/nrow(act_16)
+scheduled_rew_16
+```
+#Probabilistic rewarded choices
+#accuracy = 0, scheduled = 0
+
+```{r}
+acc_0_34 <- subset(df_34, df_34$accuracy=="0")
+df_prob_rew_34 <- subset(df_34, df_34$reward_outcome=="probabalistic_reward")
+
+prob_rew_34_a <- nrow(df_prob_rew_34)/nrow(df_34)
+prob_rew_34_b <- nrow(df_prob_rew_34)/nrow(acc_0_34)
+
+prob_rew_34_a
+prob_rew_34_b
+```
+

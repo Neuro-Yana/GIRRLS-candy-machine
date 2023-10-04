@@ -1,0 +1,13 @@
+settings,num_blocks,num_stims,trials_per_stim
+600,1,6,10
+400,1,6,10
+False,1,6,10
+MacAir,1,6,10
+black,1,6,10
+pyglet,1,6,10
+Text,1,6,10
+center,1,6,10
+0.12,1,6,10
+350,1,6,10
+white,1,6,10
+0.3,1,6,10

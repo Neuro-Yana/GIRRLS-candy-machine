@@ -1,0 +1,21 @@
+#open pickle file
+
+import os
+import pandas as pd
+#import dill
+import pickle
+import pprint
+
+print("imported pandas")
+filepath = r"C:\Users\User\OneDrive - University of Wyoming\Desktop - Copy\Lab\Candy machine\0 Scripts\0 GIRRLS-master\6 June 17 2023\PST1\Datapath\hpc7\hpc7"
+print(os.path.exists(filepath))
+#obj = pd.read_pickle(filepath)
+
+obj = pickle.load(open(filepath, "rb"))
+pprint.pprint(obj)
+
+# with open(filepath, 'rb') as f:
+
+#     file = pickle.load(f) # deserialize using load()
+#     print(file) # print student names
+
