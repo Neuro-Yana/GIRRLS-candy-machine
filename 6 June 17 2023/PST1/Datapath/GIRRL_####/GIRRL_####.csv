@@ -1,3 +1,0 @@
-left_stim_name,left_stim_number,right_stim_name,right_stim_number,shceduled_outcome,stim_onset,key_press,RT,accuracy,reward_outcome,feedback_onset,block
-./Stims/4.bmp,6,./Stims/1.bmp,1,1,0.010170900000957772,1,1.3496930000001157,1,correct_reward,3.3778376999998727,0
-./Stims/6.bmp,2,./Stims/5.bmp,5,0,6.498392100000274,q,0.4614908000003197,0,,,0
