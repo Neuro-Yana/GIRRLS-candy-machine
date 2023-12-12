@@ -17,27 +17,32 @@ bool TransTypeAcknowledge = false;
 bool TransTypeEvent = false;
 
 // ID10T Host Commands
-int ESTABLISH_CONNECTION[3] = {0x7e,0x45,0x53}; // Used to signal the start of an experiment ('~ES')
-int DISPENSE_CANDY[3] = {0x7e,0x49,0x44}; // Used to signal when to dispense ('~ID')
+#define ESTABLISH_CONNECTION 0x45 // Used to signal the start of comms ('~E[B/S])
+#define DISPENSE_CANDY 0x49 // Used to signal for the arduino to dispense candy ('~ID')
+#define WATCHDOG_HEARTBEAT 0x72 // Used to determine if a proper connection still exists ('~HD')
 // #define RESET 0x51 // This command is denoted by a capital 'Q' Indev reset function (req. hardware mod)
 
-// ID10T Host Acknowledgements
-char ESTABLISH_CONNECTION_SERIAL_RESPONSE[3] = {0x40,0x65,0x73}; // Ack sent to python to begin ('@es')
-char MOTOR_ROTATE_RESPONSE[3] = {0x40,0x69,0x79}; // Ack sent upon attempted dispense ('@i[y or z]')
+//ID10T Command Parameters
+#define CONNECTION_TYPE_BLUETOOTH 0x42 // Used to indicate that bluetooth is being used ('~EB')
+#define CONNECTION_TYPE_SERIAL 0X53 // Used to indicate that Serial (USB) is being used ('~ES')
 
-// ID10T Incoming Buffer Integers
+// ID10T Host Acknowledgements
+char ESTABLISH_CONNECTION_SERIAL_RESPONSE[3] = {TRANS_TYPE_ACKNOWLEDGE,0x65,0x73}; // Ack sent to python to begin serial ('@es')
+char ESTABLISH_CONNECTION_BLUETOOTH_RESPONSE[3] = {TRANS_TYPE_ACKNOWLEDGE,0x65,0x62}; // Ack sent to python to begin bluetooth ('@eB')
+char WATCHDOG_HEARTBEAT_ACKNOWLEDGEMENT[3] = {TRANS_TYPE_ACKNOWLEDGE,0x104,0x44S}
+char MOTOR_ROTATE_RESPONSE[3] = {0x40,0x69,0x79}; // Ack sent upon attempted dispense ('@i[y/z]')
+
+// ID10T Incoming Buffer Variables -- used to maintain the incoming buffer
 char SerialIncomingQueue[SERIAL_INCOMING_BUFFER_SIZE];
 int SerialIncomingQueueFillAmt = 0; // How much is available to read
 int SerialIncomingReadPointer = 0; // Index in queue to start read (circular buffer)
 int SerialIncomingWritePointer = 0; // Index where to write next byte
-bool ResetToggle = false;
+// bool ResetToggle = false; //INDEV
 bool IsConnectionEstablished = false;
 bool IsProgramPaused = false; 
-
-
-
 #define CHECK_IF_ENOUGH_BYTES_TO_WRITE_TO_QUEUE 3
-// ID10T Outgoing Buffer Integers
+
+// ID10T Outgoing Buffer Variables -- used to maintain the outgoing buffer
 char SerialOutgoingQueue[SERIAL_OUTGOING_BUFFER_SIZE];
 int SerialOutgoingQueueFillAmt = 0; // How much is available to read
 int SerialOutgoingReadPointer = 0; // Index in queue to start read (circular buffer)
@@ -122,49 +127,51 @@ void ProcessIncomingQueue () {   //interpret the byte pulled from the cue and ex
   // Pull off a single command from the queue if command has enough bytes.
   // For simplicity sake, all commands will be a total of 3 bytes (indicating command type, command id, command parameter)
   if (SerialIncomingQueueFillAmt > 2) { // Having anything more than 2 means we have enough to pull a 3 byte command.
-    // Check if first byte in queue indicates a command type (if not, throw it out and don't process more until next time ProcessIncomingQueue is called)
-    char ByteRead = PullByteOffIncomingQueue();
-     if (ByteRead == TRANS_TYPE_COMMAND) {
-      TransTypeCommand = true;
-      TransTypeAcknowledge = false;
-    } else if (ByteRead == TRANS_TYPE_ACKNOWLEDGE) {
-      TransTypeAcknowledge = true;
-      TransTypeCommand = false;
-    } else {
-      ByteRead = 0;
-      TransTypeCommand = false;
-      TransTypeAcknowledge = false;
-    }    SetFailLed(true);
-    if (TransTypeCommand) { 
+    // Check if first byte in queue indicates a command type (if not, throw it out and yell at the python dev)
+    char ByteRead = PullByteOffIncomingQueue(); // save the byte from the que for later (now)
+     // determine the nature of the proceeding byte (CMD)
+    switch(ByteRead) { // Determine transtye from the first byte (one of two [three] types)
+      case TRANS_TYPE_COMMAND:
+        TransTypeCommand = true;
+        TransTypeAcknowledge = false; 
+        break
+      case TRANS_TYPE_ACKNOWLEDGE:
+        TransTypeAcknowledge = true;
+        TransTypeCommand = false;
+        break
+    }
+    if ((TransTypeCommand = false) and (TransTypeAcknowledge = false)) { //
+      ByteRead = 0; // Zero out ByteRead to reset it for the next execution
+      return // cease execution of the function as a valid trans type was not passed
+    }
+    if (TransTypeCommand) {
       ByteRead = PullByteOffIncomingQueue();
-      if (ByteRead == ESTABLISH_CONNECTION[1]) {
-        ByteRead = PullByteOffIncomingQueue();
-        if (ByteRead == ESTABLISH_CONNECTION[2]) {
-          IsConnectionEstablished = true;
-          // char* BytesToWrite[3] = {ESTABLISH_CONNECTION_SERIAL_RESPONSE}; 
-          WriteOutgoingBuffer (ESTABLISH_CONNECTION_SERIAL_RESPONSE, sizeof(ESTABLISH_CONNECTION_SERIAL_RESPONSE));
-        }
-      } else if (ByteRead == DISPENSE_CANDY[1]) {
-        ByteRead = PullByteOffIncomingQueue();
-          if (ByteRead == DISPENSE_CANDY[2]) {
+      switch (ByteRead) {
+        case ESTABLISH_CONNECTION:
+          ByteRead = PullByteOffIncomingQueue();
+          switch (ByteRead) {
+            case CONNECTION_TYPE_BLUETOOTH:
+              IsConnectionEstablished = true;
+              WriteOutgoingBuffer (ESTABLISH_CONNECTION_BLUETOOTH_RESPONSE, sizeof(ESTABLISH_CONNECTION_BLUETOOTH_RESPONSE));
+              break; //bluetooth is grossly indev
+            case CONNECTION_TYPE_SERIAL:
+              IsConnectionEstablished = true;
+              WriteOutgoingBuffer (ESTABLISH_CONNECTION_SERIAL_RESPONSE, sizeof(ESTABLISH_CONNECTION_SERIAL_RESPONSE));
+              break;
+          break;
+        case WATCHDOG_HEARTBEAT:
+          WriteOutgoingBuffer(WATCHDOG_HEARTBEAT_ACKNOWLEDGEMENT, sizeof(WATCHDOG_HEARTBEAT_ACKNOWLEDGEMENT));
+        case DISPENSE_CANDY:
+          ByteRead = PullByteOffIncomingQueue();
           ControlMotor(ByteRead);
           WatchForCandyDispensed = true;
-          // char* BytesToWrite[3] = {MOTOR_ROTATE_RESPONSE};
-          WriteOutgoingBuffer (MOTOR_ROTATE_RESPONSE, sizeof(MOTOR_ROTATE_RESPONSE)); 
+          WriteOutgoingBuffer(MOTOR_ROTATE_RESPONSE, sizeof(MOTOR_ROTATE_RESPONSE)); 
+          break;
           }
-      } /*else if (ByteRead == RESET) {
-        ByteRead = PullByteOffInc    SetFailLed(true);omingQueue();
-        //WriteOnSerial(TRANS_TYPE_COMMAND);
-        //WriteOnSerial(RESETTING);
-        Restart();
-      } */
-       //Make sure there is still a possible parameter byte
-      if (SerialIncomingQueueFillAmt > 0) {
-        // Then see if byte matches command id; if not double bytes and do nothing until next time ProcessIncomingQueue is called          
       }
+    } 
   }
-  }
-  }
+}  
 // -------------------------------------------------------------------------------------------- //
 void WriteOutgoingBuffer (char* ByteArray, int length) {
   //Serial.write('1');
