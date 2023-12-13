@@ -1,0 +1,7 @@
+{
+    "sketch": "Candy_Machine.ino",
+    "configuration": "softdevice=s132v6,debug=l0,debug_output=serial",
+    "board": "adafruit:nrf52:feather52832",
+    "port": "/dev/ttyUSB0",
+    "programmer": "nrfjprog"
+}

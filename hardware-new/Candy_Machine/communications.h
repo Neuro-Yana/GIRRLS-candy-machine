@@ -13,6 +13,7 @@ void readSerial();
 void processIncomingQueue();
 void ProcessOutgoingQueue ();
 //bool ResetToggle();
-void DetermineCommTypes ();
+void CommsOperation ();
 void WriteOutgoingBuffer (char* ByteArray, int length);
+void DetermineWatchdogResponse ();
 #endif

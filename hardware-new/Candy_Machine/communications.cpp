@@ -27,10 +27,12 @@ bool TransTypeEvent = false;
 #define CONNECTION_TYPE_SERIAL 0X53 // Used to indicate that Serial (USB) is being used ('~ES')
 
 // ID10T Host Acknowledgements
-char ESTABLISH_CONNECTION_SERIAL_RESPONSE[3] = {TRANS_TYPE_ACKNOWLEDGE,0x65,0x73}; // Ack sent to python to begin serial ('@es')
-char ESTABLISH_CONNECTION_BLUETOOTH_RESPONSE[3] = {TRANS_TYPE_ACKNOWLEDGE,0x65,0x62}; // Ack sent to python to begin bluetooth ('@eB')
-char WATCHDOG_HEARTBEAT_ACKNOWLEDGEMENT[3] = {TRANS_TYPE_ACKNOWLEDGE,0x104,0x44S}
+char ESTABLISH_CONNECTION_SERIAL_RESPONSE[3] = {0x40,0x65,0x73}; // Ack sent to python to begin serial ('@es')
+char ESTABLISH_CONNECTION_BLUETOOTH_RESPONSE[3] = {0x40,0x65,0x62}; // Ack sent to python to begin bluetooth ('@eB')
+char WATCHDOG_HEARTBEAT_ACKNOWLEDGEMENT[3] = {0x40,0x68,0x44};
 char MOTOR_ROTATE_RESPONSE[3] = {0x40,0x69,0x79}; // Ack sent upon attempted dispense ('@i[y/z]')
+
+//ID10T Events
 
 // ID10T Incoming Buffer Variables -- used to maintain the incoming buffer
 char SerialIncomingQueue[SERIAL_INCOMING_BUFFER_SIZE];
@@ -39,7 +41,7 @@ int SerialIncomingReadPointer = 0; // Index in queue to start read (circular buf
 int SerialIncomingWritePointer = 0; // Index where to write next byte
 // bool ResetToggle = false; //INDEV
 bool IsConnectionEstablished = false;
-bool IsProgramPaused = false; 
+ 
 #define CHECK_IF_ENOUGH_BYTES_TO_WRITE_TO_QUEUE 3
 
 // ID10T Outgoing Buffer Variables -- used to maintain the outgoing buffer
@@ -49,8 +51,10 @@ int SerialOutgoingReadPointer = 0; // Index in queue to start read (circular buf
 int SerialOutgoingWritePointer = 0; // Index where to write next byte
 bool WatchForCandyDispensed = false;
 bool WatchForCandyTaken = false;
-bool ReadyToWrite = false;
-bool WaitingForCommand = true;
+
+// ID10T Error handling -- indev 
+bool IsErrorRaised = false;
+
 // -------------------------------------------------------------------------------------------- //
 void setWatchForCandyDispensed (bool newValue) {
   WatchForCandyDispensed = newValue;
@@ -133,16 +137,17 @@ void ProcessIncomingQueue () {   //interpret the byte pulled from the cue and ex
     switch(ByteRead) { // Determine transtye from the first byte (one of two [three] types)
       case TRANS_TYPE_COMMAND:
         TransTypeCommand = true;
-        TransTypeAcknowledge = false; 
-        break
+        TransTypeAcknowledge = false;
+        //Serial.write('1');
+        break;
       case TRANS_TYPE_ACKNOWLEDGE:
         TransTypeAcknowledge = true;
         TransTypeCommand = false;
-        break
+        break;
     }
-    if ((TransTypeCommand = false) and (TransTypeAcknowledge = false)) { //
+    if ((TransTypeCommand == false) and (TransTypeAcknowledge == false)) { //
       ByteRead = 0; // Zero out ByteRead to reset it for the next execution
-      return // cease execution of the function as a valid trans type was not passed
+      return; // cease execution of the function as a valid trans type was not passed
     }
     if (TransTypeCommand) {
       ByteRead = PullByteOffIncomingQueue();
@@ -158,9 +163,10 @@ void ProcessIncomingQueue () {   //interpret the byte pulled from the cue and ex
               IsConnectionEstablished = true;
               WriteOutgoingBuffer (ESTABLISH_CONNECTION_SERIAL_RESPONSE, sizeof(ESTABLISH_CONNECTION_SERIAL_RESPONSE));
               break;
+          }
           break;
-        case WATCHDOG_HEARTBEAT:
-          WriteOutgoingBuffer(WATCHDOG_HEARTBEAT_ACKNOWLEDGEMENT, sizeof(WATCHDOG_HEARTBEAT_ACKNOWLEDGEMENT));
+        //case WATCHDOG_HEARTBEAT:
+          //DidgetHeartbeat = true;  
         case DISPENSE_CANDY:
           ByteRead = PullByteOffIncomingQueue();
           ControlMotor(ByteRead);
@@ -168,8 +174,10 @@ void ProcessIncomingQueue () {   //interpret the byte pulled from the cue and ex
           WriteOutgoingBuffer(MOTOR_ROTATE_RESPONSE, sizeof(MOTOR_ROTATE_RESPONSE)); 
           break;
           }
-      }
+      
     } 
+    TransTypeAcknowledge = false;
+    TransTypeCommand = false;
   }
 }  
 // -------------------------------------------------------------------------------------------- //
@@ -239,10 +247,17 @@ void EstablishConnectionToSoftware () {
   // set up communications
   SetUpCommunications();
 
-  // Watch for init command
+  // Watch for initilization command
   while (!IsConnectionEstablished) {
     CommsOperation();
   }
   SetFailLed(false);
 }
 // -------------------------------------------------------------------------------------------- //
+void DetermineWatchdogResponse () {
+  if (IsErrorRaised == false) { 
+    WriteOutgoingBuffer (WATCHDOG_HEARTBEAT_ACKNOWLEDGEMENT, sizeof(WATCHDOG_HEARTBEAT_ACKNOWLEDGEMENT));
+  } else {
+    // WriteOutgoingBuffer (/*error conditionn raised*/, sizeof(/*error condition*/))
+  }
+}

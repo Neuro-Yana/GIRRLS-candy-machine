@@ -1,8 +1,11 @@
 #include "config.h"
-
+#include "communications.h"
 #include <Arduino.h> 
 #include <Adafruit_MotorShield.h> // Need to get appropriate library if new arduino install
 #include "hardware_operations.h"
+
+char EVENT_CANDY_DISPENSED[3] = {0x25,0x4d,0x43};
+char EVENT_CANDY_TAKEN[3] = {0x25,0x54,0x52};
 
 
 // Setup instance of motor stepper
@@ -10,6 +13,7 @@ Adafruit_MotorShield AFMS = Adafruit_MotorShield(); // Create the motor shield o
 Adafruit_StepperMotor *MotorPrimaryDispense = AFMS.getStepper(516, 2); // Connect a stepper motor with 516 steps per revolution to motor port #2 (M3 and M4)
 
 bool RunTheMotor = false;
+int TimesDispensed = 0;
 
 // -------------------------------------------------------------------------------------------- //
 void setRunTheMotor (bool newValue) {
@@ -62,6 +66,7 @@ void ControlMotor (char parameter) {
  if (parameter == 0x44) {
  setRunTheMotor(true);
  MotorMovePrimaryDispense(MOTOR_ROTATION_PER_DISPENSE);
+ setRunTheMotor(false);
  
  }
 }
@@ -84,5 +89,24 @@ bool IsCandyTaken () {
 // -------------------------------------------------------------------------------------------- //
 void Restart () {
     digitalWrite(PIN_RESET, HIGH);
+}
+// -------------------------------------------------------------------------------------------- //
+void WatchBeamBreakers () {
+  // Candy Dispensed
+  if (getWatchForCandyDispensed() && IsCandyDispensed ()) {
+    setWatchForCandyDispensed(false);
+    setWatchForCandyTaken(true);
+    TimesDispensed++;
+    WriteOutgoingBuffer (EVENT_CANDY_DISPENSED, sizeof(EVENT_CANDY_DISPENSED));
+    setRunTheMotor(false);
+  }
+
+  // Candy Taken
+  if (TimesDispensed > 0 && getWatchForCandyTaken() && IsCandyTaken()) {
+    TimesDispensed--;
+    WriteOutgoingBuffer (EVENT_CANDY_TAKEN, sizeof(EVENT_CANDY_TAKEN));
+  } else {
+    setWatchForCandyTaken(false);
+    }
 }
 // -------------------------------------------------------------------------------------------- //

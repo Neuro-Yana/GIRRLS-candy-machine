@@ -12,4 +12,5 @@ bool IsCandyTaken ();
 void Restart ();
 bool getRunTheMotor ();
 void setRunTheMotor (bool newValue);
+void WatchBeamBreakers ();
 #endif
