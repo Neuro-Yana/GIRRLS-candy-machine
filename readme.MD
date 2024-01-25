@@ -24,32 +24,41 @@ pip install -r requirements.txt
 
 To flash your nrf52832 with our code you need to have the arduino IDE installed with the proper board manager and COM port set.
 
-Download the 1.8.2 version of the Arduino Integrated Development Environment (IDE) software.
+1) Download the 1.8.2 version of the Arduino Integrated Development Environment (IDE) software [here](https://www.arduino.cc/en/software/OldSoftwareReleases).
 
-Open the Arduino IDE and go to the "Preferences" menu.
+2) Open the Arduino IDE and go to the `Preferences` menu (File > Preferences).
 
-Add a new URL for the Adafruit board manager by adding the following link to the "Additional Board Manager URLs" setting: https://adafruit.github.io/arduino-board-index/package_adafruit_index.json.
+3) Add a new URL for the Adafruit board manager by adding the following link to the "Additional Board Manager URLs" setting: https://adafruit.github.io/arduino-board-index/package_adafruit_index.json.
 
-Go to the "Boards Manager" under the "Tools" menu, search for "Adafruit nRF52," and install it.
-Select the "Adafruit Feather nRF52832" board from the "Tools" menu.
+4) Go to the `Boards Manager` (Tools > Board: "board name" > boards manager), search for "Adafruit nRF52," and install it.
 
-Connect your board to your computer.
+5) Select the "Adafruit Feather nRF52832" board from the "Tools" menu.
 
-Identify the correct serial port for your board in the "Device Manager."
+6) Connect your board to your computer.
 
-Make sure the correct serial port is selected in the Arduino IDE under the "Tools" menu.
+7) Identify the correct serial port for your board in the `Device Manager`. (In the windows menu, not the Arduino IDE)
 
-Download the code file from the following link: https://drive.google.com/file/d/1c-6pmIpI3OBxZbIts5aktu7tMJwVAPpF/view?usp=share_link
+Press the Windows key > type `Device Manager` and open > click on Ports (COM & LPT) > find `Silicon Labs CP210x USB to UART Bridge (COM#)` (this may depend on your computer)
 
-Create a folder for the code and open it in the Arduino IDE.
+8) Make sure the correct serial port is selected in the Arduino IDE under the "Tools" menu.
 
-Compile the code, but you will encounter error messages because some libraries are missing.
+Tools > Port: "COM#" - make sure to use the same port number in the last step. 
 
-Download and install the "Adafruit Motorshield.h" and "Adafruit_I2CDevice.h" libraries from the internet.
+9) Download the code files in old > arduino > Candy_Machine.
 
-Recompile the code and upload it to the board.
+10) Create a folder called `Candy_Machine` for the code and open it in the Arduino IDE.
 
-Test the code to ensure it's working properly.
+11) Compile the code, but you will encounter error messages because some libraries are missing.
+
+12) Download and install the "Adafruit Motorshield.h" and "Adafruit_I2CDevice.h" libraries from the internet.
+
+Go into sketch > include libraries > manage libraries > search for `Adafruit Motor Shield v2 Library` > click install
+
+Repeat for `Adafruit_BusIO` library
+
+13) Recompile the code and upload it to the board.
+
+14) Test the code to ensure it's working properly.
 
 That's it! The steps may seem complicated, but with persistence and some patience, you can get your board up and running in no time.
 
