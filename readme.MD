@@ -42,11 +42,11 @@ Press the Windows key > type `Device Manager` and open > click on Ports (COM & L
 
 8) Make sure the correct serial port is selected in the Arduino IDE under the "Tools" menu.
 
-Tools > Port: "COM#" - make sure to use the same port number from the last step is choosen here. 
+Tools > Port: "COM#" - make sure to use the same port number in the last step. 
 
-9) Download the code file from the following link: https://drive.google.com/file/d/1c-6pmIpI3OBxZbIts5aktu7tMJwVAPpF/view?usp=share_link
+9) Download the code files in old > arduino > Candy_Machine.
 
-10) Create a folder for the code and open it in the Arduino IDE.
+10) Create a folder called `Candy_Machine` for the code and open it in the Arduino IDE.
 
 11) Compile the code, but you will encounter error messages because some libraries are missing.
 
